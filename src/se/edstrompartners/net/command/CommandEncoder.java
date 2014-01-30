@@ -1,10 +1,10 @@
 package se.edstrompartners.net.command;
 
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 public class CommandEncoder {
-
-    private static final Charset latin1 = Charset.forName("ISO-8859-1");
+    private static final Charset UTF8 = Charset.forName("UTF-8");
 
     private byte[] bytes;
     private int offset;
@@ -17,7 +17,7 @@ public class CommandEncoder {
      *            The command to encode.
      */
     public CommandEncoder(Command com) {
-        this.bytes = new byte[com.datasize() + 8];
+        this.bytes = new byte[1024];
         encodeCommon(com);
     }
 
@@ -28,11 +28,10 @@ public class CommandEncoder {
      * @return
      */
     public byte[] getBytes() {
-        return bytes;
+        return Arrays.copyOf(bytes, offset);
     }
 
     private CommandEncoder encodeCommon(Command com) {
-        encode(com.datasize() + 8);
         encode(com.getType().getID());
         return this;
     }
@@ -251,7 +250,7 @@ public class CommandEncoder {
      * @return
      */
     public CommandEncoder encode(String text) {
-        byte[] sbytes = text.getBytes(latin1);
+        byte[] sbytes = text.getBytes(UTF8);
         encode(sbytes.length);
         System.arraycopy(sbytes, 0, bytes, offset, sbytes.length);
         offset += text.length();

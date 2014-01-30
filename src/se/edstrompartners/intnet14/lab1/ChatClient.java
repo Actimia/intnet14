@@ -1,104 +1,66 @@
 package se.edstrompartners.intnet14.lab1;
 
-import static se.edstrompartners.intnet14.lab1.ChatServer.*;
-
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
 import java.util.Scanner;
 
-public class ChatClient {
+import se.edstrompartners.net.command.Command;
+import se.edstrompartners.net.command.CommandListener;
+import se.edstrompartners.net.events.Handshake;
+import se.edstrompartners.net.events.Message;
 
-    private static final Charset UTF8 = Charset.forName("UTF-8");
-
-    private Socket sock;
-    private InputStream in;
-    private OutputStream out;
-    private byte[] buf;
+public class ChatClient implements CommandListener {
+    private Network net;
     private String name;
 
-    public static void main(String[] args) throws UnknownHostException {
-        ChatClient cc = new ChatClient(InetAddress.getByName("localhost"), 8080, "Actimia");
-        cc.start();
-    }
-
-    public ChatClient(InetAddress host, int port, String name) {
+    public static void main(String[] args) {
         try {
-            sock = new Socket(host, port);
-            in = sock.getInputStream();
-            out = sock.getOutputStream();
-            buf = new byte[4096];
-
-            this.name = name;
-            out.write(name.getBytes(UTF8));
-            out.flush();
-
+            ChatClient cc = new ChatClient(InetAddress.getByName("localhost"), 8080, "Actimia");
+            cc.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public ChatClient(InetAddress host, int port, String name) throws IOException {
+        net = new Network(this, new Socket(host, port));
+        this.name = name;
     }
 
     private void start() {
-        Thread t = new Thread(new ListenThread());
-        t.setDaemon(true);
-        t.start();
-
         try (Scanner sc = new Scanner(System.in)) {
+            Thread t = new Thread(net);
+            t.start();
+
+            net.send(new Handshake(name));
             while (true) {
                 String line = sc.nextLine();
-
                 if (line.equals("/exit")) {
-                    break;
+                    net.shutdown();
+                    return;
                 }
-
-                send(toUtf8(name + ": " + line));
-
+                net.send(new Message(name, line));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
-    public void send(byte[] data) throws IOException {
-        out.write(data);
-        out.flush();
-    }
-
-    private class ListenThread implements Runnable {
-
-        @Override
-        public void run() {
-            try {
-                while (true) {
-                    int len = in.read(buf);
-
-                    if (len == -1) {
-                        System.out.println("INFO: Connection to server lost.");
-                        return;
-                    }
-
-                    byte[] data = new byte[len];
-                    System.arraycopy(buf, 0, data, 0, len);
-                    System.out.println(fromUtf8(data));
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    in.close();
-                    out.close();
-                    sock.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
+    @Override
+    public void onCommand(Network src, Command com) throws IOException {
+        switch (com.getType()) {
+        case MESSAGE:
+            Message msg = (Message) com;
+            System.out.println(msg.source + ": " + msg.message);
+            break;
+        case NETWORKSHUTDOWN:
+            System.out.println("INFO: Network connection lost.");
+            System.exit(0);
+            break;
+        default:
+            break;
         }
-
     }
+
 }

@@ -3,7 +3,7 @@ package se.edstrompartners.net.command;
 import java.nio.charset.Charset;
 
 public class CommandDecoder {
-    private static final Charset latin1 = Charset.forName("ISO-8859-1");
+    private static final Charset UTF8 = Charset.forName("UTF-8");
     private int offset = 0;
     private byte[] bytes;
     private int commandID;
@@ -11,17 +11,11 @@ public class CommandDecoder {
 
     public CommandDecoder(byte[] bytes) {
         this.bytes = bytes;
-        length = decodeInt();
         commandID = decodeInt();
-        if (length != bytes.length) {
-            throw new IllegalArgumentException(
-                    "Message length does not match buffer! bytes.length = " + bytes.length
-                            + ", encoded length = " + length);
-        }
     }
 
     public int decodedLength() {
-        return length;
+        return offset;
     }
 
     public int decodedID() {
@@ -134,7 +128,7 @@ public class CommandDecoder {
 
     public String decodeString() {
         int len = decodeInt();
-        String res = new String(bytes, offset, len, latin1);
+        String res = new String(bytes, offset, len, UTF8);
         offset = offset + len;
         return res;
     }

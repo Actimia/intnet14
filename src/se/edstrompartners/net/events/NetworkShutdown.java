@@ -5,30 +5,30 @@ import se.edstrompartners.net.command.CommandDecoder;
 import se.edstrompartners.net.command.CommandEncoder;
 import se.edstrompartners.net.command.CommandType;
 
-public class Handshake extends Command {
-    public String name;
+public class NetworkShutdown extends Command {
 
-    public Handshake(String username) {
-        this.name = username;
+    public String token;
+
+    public NetworkShutdown() {
     }
 
-    public Handshake() {
-
+    public NetworkShutdown(String token) {
+        this.token = token;
     }
 
     @Override
     public void decode(CommandDecoder cd) {
-        name = cd.decodeString();
+
     }
 
     @Override
     public void encode(CommandEncoder ce) {
-        ce.encode(name);
+
     }
 
     @Override
     public CommandType getType() {
-        return CommandType.HANDSHAKE;
+        return CommandType.NETWORKSHUTDOWN;
     }
 
 }

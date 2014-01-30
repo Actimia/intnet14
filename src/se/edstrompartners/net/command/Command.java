@@ -72,18 +72,6 @@ public abstract class Command {
     }
 
     /**
-     * Execute the command.
-     * 
-     * TODO: arguments
-     * 
-     * @param src
-     * @param s
-     * @param c
-     * @param gameHost
-     */
-    public abstract void execute();
-
-    /**
      * Decodes the command from a CommandDecoder.
      * 
      * @param cd
@@ -104,12 +92,5 @@ public abstract class Command {
      * @return The ID of the commandtype.
      */
     public abstract CommandType getType();
-
-    /**
-     * 
-     * 
-     * @return The encoded size of the commands data.
-     */
-    public abstract int datasize();
 
 }
