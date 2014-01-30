@@ -1,5 +1,7 @@
 package se.edstrompartners.intnet14.lab1;
 
+import static se.edstrompartners.intnet14.lab1.ChatServer.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,21 +44,22 @@ public class ChatClient {
 
     private void start() {
         Thread t = new Thread(new ListenThread());
+        t.setDaemon(true);
         t.start();
 
         try (Scanner sc = new Scanner(System.in)) {
             while (true) {
                 String line = sc.nextLine();
 
-                if (line.equals("exit")) {
+                if (line.equals("/exit")) {
                     break;
                 }
 
-                send(new String(name + ": " + line).getBytes(UTF8));
+                send(toUtf8(name + ": " + line));
 
             }
         } catch (IOException e) {
-
+            e.printStackTrace();
         }
 
     }
@@ -75,11 +78,13 @@ public class ChatClient {
                     int len = in.read(buf);
 
                     if (len == -1) {
-                        System.out.println("connection lost");
+                        System.out.println("INFO: Connection to server lost.");
                         return;
                     }
 
-                    System.out.println(new String(buf, 0, len, UTF8));
+                    byte[] data = new byte[len];
+                    System.arraycopy(buf, 0, data, 0, len);
+                    System.out.println(fromUtf8(data));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -89,7 +94,7 @@ public class ChatClient {
                     out.close();
                     sock.close();
                 } catch (IOException e) {
-
+                    e.printStackTrace();
                 }
             }
 

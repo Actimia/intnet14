@@ -36,6 +36,7 @@ public class ChatServer {
                 // recieve new connections
                 ClientHandler st = new ClientHandler(ssocket.accept());
                 Thread t = new Thread(st);
+                t.setDaemon(true);
                 t.start();
             }
         } catch (IOException e) {
@@ -49,15 +50,15 @@ public class ChatServer {
             return false;
         } else {
             clients.put(name, handler);
-            System.out.println(name + " registered.");
-            send(name, "This is a server MOTD.".getBytes(UTF8));
+            System.out.println(name + " connected.");
+            send(name, toUtf8("INFO: This is a server MOTD."));
             return true;
         }
     }
 
     public void unregister(String name) {
         clients.remove(name);
-        System.out.println(name + " unregistered.");
+        System.out.println(name + " disconnected.");
     }
 
     private boolean send(String name, byte[] message) throws IOException {
@@ -106,7 +107,8 @@ public class ChatServer {
                     int len = in.read(buf);
                     name = new String(buf, 0, len, UTF8);
                     if (!register(name, this)) {
-                        // registration failed, exit
+                        // registration failed, send error and shutdown
+                        send(toUtf8("A user with that name is already connected."));
                         return;
                     }
                 }
@@ -116,10 +118,11 @@ public class ChatServer {
                         // clean exit, do the same here
                         return;
                     }
-                    System.out.println(new String(buf, 0, len, UTF8));
+
                     byte[] data = new byte[len];
                     System.arraycopy(buf, 0, data, 0, len);
                     broadcast(data);
+                    System.out.println(fromUtf8(data));
                 }
             } catch (IOException e) {
 
@@ -134,6 +137,14 @@ public class ChatServer {
                 }
             }
         }
+    }
+
+    public static byte[] toUtf8(String s) {
+        return s.getBytes(UTF8);
+    }
+
+    public static String fromUtf8(byte[] bytes) {
+        return new String(bytes, UTF8);
     }
 
 }
