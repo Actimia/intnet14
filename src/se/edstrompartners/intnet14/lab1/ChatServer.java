@@ -9,6 +9,7 @@ import se.edstrompartners.net.command.CommandListener;
 import se.edstrompartners.net.events.Handshake;
 import se.edstrompartners.net.events.Message;
 import se.edstrompartners.net.events.NetworkShutdown;
+import se.edstrompartners.net.events.PrivateMessage;
 
 public class ChatServer implements CommandListener {
     private static final int port = 8080;
@@ -48,15 +49,16 @@ public class ChatServer implements CommandListener {
         String name = hs.name;
         if (clients.containsKey(name)) {
             // already contains a client with this name
-            handler.send(new Message("SERVER", "A user with that name already exists."));
+            handler.send(new Message("",
+                    "A user with that name already exists. Try again with another username."));
             handler.shutdown();
             return false;
         } else {
-            broadcast(new Message("SERVER", name + " connected."));
+            broadcast(new Message("", name + " connected."));
             clients.put(name, handler);
             System.out.println(name + " connected.");
             handler.setToken(name);
-            handler.send(new Message("SERVER", "This is the server motd"));
+            handler.send(new Message("", "Welcome " + name + " to the server. This is the MOTD."));
             return true;
         }
     }
@@ -66,7 +68,7 @@ public class ChatServer implements CommandListener {
             return;
         }
         Network handler = clients.remove(name);
-        broadcast(new Message("SERVER", name + " disconnected."));
+        broadcast(new Message("", name + " disconnected."));
         System.out.println(name + " disconnected.");
 
     }
@@ -96,6 +98,11 @@ public class ChatServer implements CommandListener {
             break;
         case MESSAGE:
             broadcast(com);
+            break;
+        case PRIVATEMESSAGE:
+            PrivateMessage pm = (PrivateMessage) com;
+            Network recip = clients.get(pm.tar);
+            recip.send(pm);
             break;
         case NETWORKSHUTDOWN:
             unregister(((NetworkShutdown) com).token);

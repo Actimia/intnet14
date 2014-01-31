@@ -5,12 +5,15 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import se.edstrompartners.net.command.Command;
 import se.edstrompartners.net.command.CommandListener;
 import se.edstrompartners.net.command.ListUsers;
 import se.edstrompartners.net.events.Handshake;
 import se.edstrompartners.net.events.Message;
+import se.edstrompartners.net.events.PrivateMessage;
 
 /**
  * Chat client class. Call with arguments serveradress, port and username.
@@ -19,6 +22,8 @@ import se.edstrompartners.net.events.Message;
  * 
  */
 public class ChatClient implements CommandListener {
+
+    private static final Pattern WHISPER = Pattern.compile("/(?:w|pm) ([\\w]+) ([\\S ]+)");
 
     private Network net;
     private String name;
@@ -57,9 +62,12 @@ public class ChatClient implements CommandListener {
 
             net.send(new Handshake(name));
             while (true) {
+                // System.out.print("  ");
                 String line = sc.nextLine();
                 if (line.startsWith("/")) {
-                    switch (line) {
+                    // switch on first word of command
+                    switch (line.substring(0,
+                            line.indexOf(' ') == -1 ? line.length() : line.indexOf(' '))) {
                     case "/exit":
                         net.shutdown();
                         return;
@@ -67,13 +75,25 @@ public class ChatClient implements CommandListener {
                         net.send(new ListUsers());
                         break;
                     case "/help":
-                        System.out.println("These are the available commands:");
-                        System.out.println("\t/exit - shuts down the program.");
-                        System.out.println("\t/help - displays this information.");
-                        System.out.println("\t/listusers - lists all users in this chat.");
+                        System.out.println("  These are the available commands:");
+                        System.out.println("    /exit - shuts down the program.");
+                        System.out.println("    /help - displays this information.");
+                        System.out.println("    /listusers - lists all users in this chat.");
+                        System.out.println("    /w NAME MESSAGE - send private message.");
+                        System.out.println("    /pm NAME MESSAGE - synonym for /w.");
+                        break;
+                    case "/w":
+                    case "/pm":
+                        // use a regex to find the target and the message with groups
+                        Matcher match = WHISPER.matcher(line);
+                        if (match.matches() && match.groupCount() == 2) {
+                            net.send(new PrivateMessage(name, match.group(1), match.group(2)));
+                        } else {
+                            System.out.println("  Private message syntax:\n    /w NAME MESSAGE");
+                        }
                         break;
                     default:
-                        System.out.println("Unknown command, type /help for a list.");
+                        System.out.println("  Unknown command, type /help for a list.");
                         break;
                     }
                 } else {
@@ -90,10 +110,21 @@ public class ChatClient implements CommandListener {
         switch (com.getType()) {
         case MESSAGE:
             Message msg = (Message) com;
-            System.out.println(msg.source + ": " + msg.message);
+            if (msg.source.isEmpty()) {
+                System.out.println("  " + msg.message);
+            } else {
+                System.out.println(msg.source + ": " + msg.message);
+            }
+            break;
+        case PRIVATEMESSAGE:
+            PrivateMessage pm = (PrivateMessage) com;
+            System.out.printf("  Private message from %s:%n    %s%n", pm.src, pm.msg);
+            if (!pm.tar.equals(name)) {
+                System.out.println("  Contact an admin. This pm was meant for " + pm.tar + ".");
+            }
             break;
         case NETWORKSHUTDOWN:
-            System.out.println("INFO: Network connection lost.");
+            System.out.println("  Network connection lost.");
             System.exit(0);
             break;
         default:
