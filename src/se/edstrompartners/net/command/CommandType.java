@@ -6,7 +6,8 @@ import se.edstrompartners.net.events.NetworkShutdown;
 
 public enum CommandType {
 
-    HANDSHAKE(Handshake.class), MESSAGE(Message.class), NETWORKSHUTDOWN(NetworkShutdown.class);
+    HANDSHAKE(Handshake.class), MESSAGE(Message.class), NETWORKSHUTDOWN(NetworkShutdown.class), LISTUSERS(
+            ListUsers.class);
 
     private Class<? extends Command> cls;
 

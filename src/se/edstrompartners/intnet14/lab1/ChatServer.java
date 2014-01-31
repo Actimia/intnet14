@@ -100,9 +100,21 @@ public class ChatServer implements CommandListener {
         case NETWORKSHUTDOWN:
             unregister(((NetworkShutdown) com).token);
             break;
+        case LISTUSERS:
+            src.send(new Message("USERS", getUserList()));
+            break;
         default:
             throw new AssertionError("Unknown command recieved by server: " + com.getType().name());
         }
+    }
+
+    private String getUserList() {
+        StringBuilder sb = new StringBuilder();
+        for (String name : clients.keySet()) {
+            sb.append("\n\t");
+            sb.append(name);
+        }
+        return sb.toString();
     }
 
 }

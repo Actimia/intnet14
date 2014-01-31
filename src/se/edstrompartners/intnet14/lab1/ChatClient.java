@@ -8,34 +8,38 @@ import java.util.Scanner;
 
 import se.edstrompartners.net.command.Command;
 import se.edstrompartners.net.command.CommandListener;
+import se.edstrompartners.net.command.ListUsers;
 import se.edstrompartners.net.events.Handshake;
 import se.edstrompartners.net.events.Message;
+
 /**
- *  Chat client class.
- *  Call with arguments serveradress, port and username.
+ * Chat client class. Call with arguments serveradress, port and username.
+ * 
  * @author Viking & Fredrik
- *
+ * 
  */
 public class ChatClient implements CommandListener {
+
     private Network net;
     private String name;
+
     public static void main(String[] args) {
         try {
-    		String host;
-    		int port;
-    		String name;
-        	if(args.length == 0 ){
-        		host = "localhost";
-        		port = 8080;
-        		Random rnd = new Random();
-        		name = "Guest_"+rnd.nextInt(100);	
-        		
-        	}else{
-        		host = args[0];
-        		port = Integer.parseInt(args[1]);
-        		name = args[2];        		
-        	}
-        	new ChatClient(InetAddress.getByName(host), port,name).start();
+            String host;
+            int port;
+            String name;
+            if (args.length == 0) {
+                host = "localhost";
+                port = 8080;
+                Random rnd = new Random();
+                name = "Guest_" + rnd.nextInt(100);
+
+            } else {
+                host = args[0];
+                port = Integer.parseInt(args[1]);
+                name = args[2];
+            }
+            new ChatClient(InetAddress.getByName(host), port, name).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -54,11 +58,27 @@ public class ChatClient implements CommandListener {
             net.send(new Handshake(name));
             while (true) {
                 String line = sc.nextLine();
-                if (line.equals("/exit")) {
-                    net.shutdown();
-                    return;
+                if (line.startsWith("/")) {
+                    switch (line) {
+                    case "/exit":
+                        net.shutdown();
+                        return;
+                    case "/listusers":
+                        net.send(new ListUsers());
+                        break;
+                    case "/help":
+                        System.out.println("These are the available commands:");
+                        System.out.println("\t/exit - shuts down the program.");
+                        System.out.println("\t/help - displays this information.");
+                        System.out.println("\t/listusers - lists all users in this chat.");
+                        break;
+                    default:
+                        System.out.println("Unknown command, type /help for a list.");
+                        break;
+                    }
+                } else {
+                    net.send(new Message(name, line));
                 }
-                net.send(new Message(name, line));
             }
         } catch (IOException e) {
             e.printStackTrace();
