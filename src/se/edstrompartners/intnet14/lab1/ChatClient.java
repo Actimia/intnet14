@@ -3,6 +3,7 @@ package se.edstrompartners.intnet14.lab1;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Random;
 import java.util.Scanner;
 
 import se.edstrompartners.net.command.Command;
@@ -23,19 +24,18 @@ public class ChatClient implements CommandListener {
     		String host;
     		int port;
     		String name;
-    		ChatClient cc;
         	if(args.length == 0 ){
         		host = "localhost";
         		port = 8080;
-        		name = "Actimia";
-        		cc = new ChatClient(InetAddress.getByName("localhost"), 8080, "Actimia");	
+        		Random rnd = new Random();
+        		name = "Guest_"+rnd.nextInt(100);	
+        		
         	}else{
         		host = args[0];
         		port = Integer.parseInt(args[1]);
-        		name = args[2];
-        		cc = new ChatClient(InetAddress.getByName(host), port,name);
+        		name = args[2];        		
         	}
-            cc.start();
+        	new ChatClient(InetAddress.getByName(host), port,name).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
