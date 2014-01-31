@@ -9,14 +9,32 @@ import se.edstrompartners.net.command.Command;
 import se.edstrompartners.net.command.CommandListener;
 import se.edstrompartners.net.events.Handshake;
 import se.edstrompartners.net.events.Message;
-
+/**
+ *  Chat client class.
+ *  Call with arguments serveradress, port and username.
+ * @author Viking & Fredrik
+ *
+ */
 public class ChatClient implements CommandListener {
     private Network net;
     private String name;
-
     public static void main(String[] args) {
         try {
-            ChatClient cc = new ChatClient(InetAddress.getByName("localhost"), 8080, "Actimia");
+    		String host;
+    		int port;
+    		String name;
+    		ChatClient cc;
+        	if(args.length == 0 ){
+        		host = "localhost";
+        		port = 8080;
+        		name = "Actimia";
+        		cc = new ChatClient(InetAddress.getByName("localhost"), 8080, "Actimia");	
+        	}else{
+        		host = args[0];
+        		port = Integer.parseInt(args[1]);
+        		name = args[2];
+        		cc = new ChatClient(InetAddress.getByName(host), port,name);
+        	}
             cc.start();
         } catch (IOException e) {
             e.printStackTrace();
