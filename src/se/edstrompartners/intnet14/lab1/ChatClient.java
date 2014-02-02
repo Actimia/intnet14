@@ -14,6 +14,7 @@ import se.edstrompartners.net.command.ListUsers;
 import se.edstrompartners.net.events.Handshake;
 import se.edstrompartners.net.events.Message;
 import se.edstrompartners.net.events.PrivateMessage;
+import se.edstrompartners.net.gui.MainWindow;
 
 /**
  * Chat client class. Call with arguments serveradress, port and username.
@@ -27,7 +28,7 @@ public class ChatClient implements CommandListener {
 
     private Network net;
     private String name;
-
+    private MainWindow window;
     public static void main(String[] args) {
         try {
             String host;
@@ -52,6 +53,7 @@ public class ChatClient implements CommandListener {
 
     public ChatClient(InetAddress host, int port, String name) throws IOException {
         net = new Network(this, new Socket(host, port));
+        window = new MainWindow(this,host+name);
         this.name = name;
     }
 
@@ -112,8 +114,10 @@ public class ChatClient implements CommandListener {
             Message msg = (Message) com;
             if (msg.source.isEmpty()) {
                 System.out.println("  " + msg.message);
+                window.pushToWindow(msg.message);
             } else {
                 System.out.println(msg.source + ": " + msg.message);
+                window.pushToWindow(msg.source + ": " + msg.message);
             }
             break;
         case PRIVATEMESSAGE:
