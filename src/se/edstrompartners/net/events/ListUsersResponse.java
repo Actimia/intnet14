@@ -5,37 +5,31 @@ import se.edstrompartners.net.command.CommandDecoder;
 import se.edstrompartners.net.command.CommandEncoder;
 import se.edstrompartners.net.command.CommandType;
 
-public class Message extends Command {
+public class ListUsersResponse extends Command {
 
-    public String type;
-    public String message;
+    public String[] users;
 
-    public Message() {
-        // TODO Auto-generated constructor stub
+    public ListUsersResponse() {
+
     }
 
-    public Message(String src, String msg) {
-        type = src;
-        message = msg;
+    public ListUsersResponse(String[] users) {
+        this.users = users;
     }
 
     @Override
     public void decode(CommandDecoder cd) {
-        type = cd.decodeString();
-        message = cd.decodeString();
-
+        users = cd.decodeStrings();
     }
 
     @Override
     public void encode(CommandEncoder ce) {
-        ce.encode(type);
-        ce.encode(message);
-
+        ce.encode(users);
     }
 
     @Override
     public CommandType getType() {
-        return CommandType.MESSAGE;
+        return CommandType.LISTUSERSRESPONSE;
     }
 
 }

@@ -10,8 +10,8 @@ public class CommandEncoder {
     private int offset;
 
     /**
-     * Creates a new CommandEncoder for a command. It will encode all the common
-     * fields (size and ID).
+     * Creates a new CommandEncoder for a command. It will encode all the common fields (size and
+     * ID).
      * 
      * @param com
      *            The command to encode.
@@ -22,8 +22,8 @@ public class CommandEncoder {
     }
 
     /**
-     * Fetches the bytes for the command. Dont use this reference until encoding
-     * is done unless you know what you are doing.
+     * Fetches the bytes for the command. Dont use this reference until encoding is done unless you
+     * know what you are doing.
      * 
      * @return
      */
@@ -37,9 +37,8 @@ public class CommandEncoder {
     }
 
     /**
-     * Encodes an object using a custom handler, registered with
-     * Command.registerTypeHandler(). Will throw exception if no handler is
-     * registered for the class.
+     * Encodes an object using a custom handler, registered with Command.registerTypeHandler(). Will
+     * throw exception if no handler is registered for the class.
      * 
      * @param cls
      *            The class of the object.
@@ -241,9 +240,9 @@ public class CommandEncoder {
 
     /**
      * Encodes the given string with a 4-byte length field before. Use the
-     * <code>getEncodedLength()</code> method to find encoded string length for
-     * the Command.size() method. <bold>Only ISO-8859-1 characters (code points
-     * less than 256) are supported at this time.</bold>
+     * <code>getEncodedLength()</code> method to find encoded string length for the Command.size()
+     * method. <bold>Only ISO-8859-1 characters (code points less than 256) are supported at this
+     * time.</bold>
      * 
      * @param text
      *            The string to encode.
@@ -264,5 +263,13 @@ public class CommandEncoder {
      */
     public static int getEncodedLength(String text) {
         return 4 + text.length();
+    }
+
+    public void encode(String[] users) {
+        encode(users.length);
+        for (int i = 0; i < users.length; i++) {
+            encode(users[i]);
+        }
+
     }
 }

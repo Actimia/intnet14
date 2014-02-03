@@ -17,6 +17,8 @@ public class Network implements Runnable {
     private String token;
     private final byte[] buf = new byte[1024];
 
+    private boolean closed = false;
+
     public Network(CommandListener cl, Socket sock) throws IOException {
         this.cl = cl;
         this.sock = sock;
@@ -48,22 +50,35 @@ public class Network implements Runnable {
                 cl.onCommand(this, Command.decode(data));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            if (!closed) {
+                e.printStackTrace();
+            }
         } finally {
             try {
                 shutdown();
             } catch (IOException e) {
-                e.printStackTrace();
+                if (!closed) {
+                    e.printStackTrace();
+                }
             }
         }
 
     }
 
-    public void shutdown() throws IOException {
+    private void shutdown() throws IOException {
         in.close();
         out.close();
         sock.close();
-        cl.onCommand(this, new NetworkShutdown(token));
+        if (!closed) {
+            cl.onCommand(this, new NetworkShutdown(token));
+        }
+    }
+
+    public void close() throws IOException {
+        in.close();
+        out.close();
+        sock.close();
+        closed = true;
     }
 
 }

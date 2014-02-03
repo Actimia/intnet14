@@ -6,10 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import se.edstrompartners.net.command.Command;
 import se.edstrompartners.net.command.CommandListener;
-import se.edstrompartners.net.events.Handshake;
-import se.edstrompartners.net.events.Message;
-import se.edstrompartners.net.events.NetworkShutdown;
-import se.edstrompartners.net.events.PrivateMessage;
+import se.edstrompartners.net.events.*;
 
 public class ChatServer implements CommandListener {
     private static final int port = 8080;
@@ -49,16 +46,17 @@ public class ChatServer implements CommandListener {
         String name = hs.name;
         if (clients.containsKey(name)) {
             // already contains a client with this name
-            handler.send(new Message("",
+            handler.send(new Message("error",
                     "A user with that name already exists. Try again with another username."));
-            handler.shutdown();
+            handler.close();
             return false;
         } else {
-            broadcast(new Message("", name + " connected."));
+            broadcast(new Message("server", name + " joined the chat."));
             clients.put(name, handler);
             System.out.println(name + " connected.");
             handler.setToken(name);
-            handler.send(new Message("", "Welcome " + name + " to the server. This is the MOTD."));
+            handler.send(new Message("server", "Welcome " + name
+                    + " to the server. This is the MOTD."));
             return true;
         }
     }
@@ -68,7 +66,7 @@ public class ChatServer implements CommandListener {
             return;
         }
         Network handler = clients.remove(name);
-        broadcast(new Message("", name + " disconnected."));
+        broadcast(new Message("server", name + " left the chat."));
         System.out.println(name + " disconnected.");
 
     }
@@ -102,26 +100,22 @@ public class ChatServer implements CommandListener {
         case PRIVATEMESSAGE:
             PrivateMessage pm = (PrivateMessage) com;
             Network recip = clients.get(pm.tar);
-            recip.send(pm);
+            if (recip == null) {
+                src.send(new Message("error",
+                        "Unknown user. Make sure you spelled the name correctly."));
+            } else {
+                recip.send(pm);
+            }
             break;
         case NETWORKSHUTDOWN:
             unregister(((NetworkShutdown) com).token);
             break;
         case LISTUSERS:
-            src.send(new Message("USERS", getUserList()));
+            src.send(new ListUsersResponse(clients.keySet().toArray(new String[0])));
             break;
         default:
             throw new AssertionError("Unknown command recieved by server: " + com.getType().name());
         }
-    }
-
-    private String getUserList() {
-        StringBuilder sb = new StringBuilder();
-        for (String name : clients.keySet()) {
-            sb.append("\n\t");
-            sb.append(name);
-        }
-        return sb.toString();
     }
 
 }

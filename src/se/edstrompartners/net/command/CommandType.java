@@ -1,14 +1,12 @@
 package se.edstrompartners.net.command;
 
-import se.edstrompartners.net.events.Handshake;
-import se.edstrompartners.net.events.Message;
-import se.edstrompartners.net.events.NetworkShutdown;
-import se.edstrompartners.net.events.PrivateMessage;
+import se.edstrompartners.net.events.*;
 
 public enum CommandType {
 
     HANDSHAKE(Handshake.class), MESSAGE(Message.class), NETWORKSHUTDOWN(NetworkShutdown.class), LISTUSERS(
-            ListUsers.class), PRIVATEMESSAGE(PrivateMessage.class);
+            ListUsers.class), PRIVATEMESSAGE(PrivateMessage.class), LISTUSERSRESPONSE(
+            ListUsersResponse.class);
 
     private Class<? extends Command> cls;
 

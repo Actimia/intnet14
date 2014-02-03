@@ -133,4 +133,13 @@ public class CommandDecoder {
         return res;
     }
 
+    public String[] decodeStrings() {
+        int len = decodeInt();
+        String[] res = new String[len];
+        for (int i = 0; i < res.length; i++) {
+            res[i] = decodeString();
+        }
+        return res;
+    }
+
 }
