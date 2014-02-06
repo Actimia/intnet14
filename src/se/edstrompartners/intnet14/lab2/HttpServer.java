@@ -33,8 +33,10 @@ public class HttpServer {
                         // Read and parse the whole request
                         byte[] buf = new byte[2048];
                         InputStream in = s.getInputStream();
+
                         int num = in.read(buf);
                         String request = new String(buf, 0, num, Charset.forName("UTF-8"));
+                        // System.out.println(request);
                         Request req = Request.parse(request);
 
                         // ignore favicon gets
@@ -46,9 +48,12 @@ public class HttpServer {
                             return;
                         }
 
+                        // System.out.println(request);
+
+                        StringBuilder response;
                         if (req.method.equals("GET")) {
                             // static get
-                            serveStatic(s);
+                            response = serveStatic(s);
                         } else {
                             // POST
                             if (req.cookie == null || clients.get(req.cookie) == null) {
@@ -59,6 +64,7 @@ public class HttpServer {
                                 handleClient(req, s);
                             }
                         }
+
                         // cleanup
                         s.shutdownInput();
                         s.shutdownOutput();
@@ -71,49 +77,57 @@ public class HttpServer {
         }
     }
 
-    private static void serveStatic(Socket s) throws IOException {
+    private static StringBuilder serveStatic(Socket s) throws IOException {
         // simply write top and bottom with a welcome msg
-        PrintStream response = new PrintStream(s.getOutputStream());
-        response.println("HTTP/1.1 200 OK");
-        response.println("Content-Type: text/html");
-        response.println();
-        Files.lines(Paths.get("top.html")).forEach((line) -> response.println(line));
-        response.println("Welcome to the guessing game! Please enter a number between 1 and 100.");
-        Files.lines(Paths.get("bottom.html")).forEach((line) -> response.println(line));
+        StringBuilder response = new StringBuilder();
+        response.append("HTTP/1.1 200 OK\n");
+        response.append("Content-Type: text/html\n");
+        response.append("\n");
+        Files.lines(Paths.get("top.html")).forEach((line) -> response.append(line + "\n"));
+        response.append("Welcome to the guessing game! Please enter a number between 1 and 100.\n");
+        Files.lines(Paths.get("bottom.html")).forEach((line) -> response.append(line + "\n"));
+        s.getOutputStream().write(response.toString().getBytes("UTF-8"));
+        return response;
     }
 
     private static void handleClient(Request req, Socket s) throws IOException {
         // fetch client state, serve html
         Client client = clients.get(req.cookie);
-        PrintStream response = new PrintStream(s.getOutputStream());
-        response.println("HTTP/1.1 200 OK");
-        response.println("Content-Type: text/html");
-        response.println();
+        StringBuilder response = new StringBuilder();
+        response.append("HTTP/1.1 200 OK\n");
+        response.append("Content-Type: text/html\n");
+        response.append("\n");
         handleCommon(req, client, response);
+        s.getOutputStream().write(response.toString().getBytes("UTF-8"));
     }
 
-    private static void handleCommon(Request req, Client client, PrintStream response)
+    private static StringBuilder handleCommon(Request req, Client client, StringBuilder response)
             throws IOException {
-        Files.lines(Paths.get("top.html")).forEach((line) -> response.println(line));
+        Files.lines(Paths.get("top.html")).forEach((line) -> response.append(line + "\n"));
 
-        response.println("You guessed " + req.guess + ".");
+        response.append("You guessed " + req.guess + ".\n");
         client.guesses++;
-        System.out.println(req.cookie + " guessed " + req.guess + " (" + client.guesses + ")");
+        System.out.println(client.cookie + " guessed " + req.guess + " (" + client.guesses + ")");
 
-        int guess = Integer.parseInt(req.guess);
-        if (guess > client.answer) {
-            response.println("That was too high, guess lower!");
-        } else if (guess < client.answer) {
-            response.println("That was too low, guess higher!");
-        } else {
-            // correct answer, reset game
-            response.println("That was correct! It took you " + client.guesses + " guesses!");
-            response.println("<br>A new number has been generated for you if you want to keep guessing.");
-            client.answer = rnd.nextInt(100);
-            client.guesses = 0;
+        try {
+            int guess = Integer.parseInt(req.guess);
+            if (guess > client.answer) {
+                response.append("That was too high, guess lower!\n");
+            } else if (guess < client.answer) {
+                response.append("That was too low, guess higher!\n");
+            } else {
+                // correct answer, reset game
+                response.append("That was correct! It took you " + client.guesses + " guesses!\n");
+                response.append("<br>A new number has been generated for you if you want to keep guessing.\n");
+                client.answer = rnd.nextInt(100);
+                client.guesses = 0;
+            }
+        } catch (NumberFormatException e) {
+            response.append("That is not a valid number!\n");
         }
 
-        Files.lines(Paths.get("bottom.html")).forEach((line) -> response.println(line));
+        Files.lines(Paths.get("bottom.html")).forEach((line) -> response.append(line + "\n"));
+        return response;
     }
 
     private static void handleNewClient(Request req, Socket s) throws IOException {
@@ -125,11 +139,12 @@ public class HttpServer {
         clients.put(cookie, client);
 
         // transmit cookie in response
-        PrintStream response = new PrintStream(s.getOutputStream());
-        response.println("HTTP/1.1 200 OK");
-        response.println("Content-Type: text/html");
-        response.println("Set-Cookie: SESSIONID=" + cookie);
-        response.println();
+        StringBuilder response = new StringBuilder();
+        response.append("HTTP/1.1 200 OK\n");
+        response.append("Content-Type: text/html\n");
+        response.append("Set-Cookie: SESSIONID=" + cookie + "\n");
+        response.append("\n");
         handleCommon(req, client, response);
+        s.getOutputStream().write(response.toString().getBytes("UTF-8"));
     }
 }
