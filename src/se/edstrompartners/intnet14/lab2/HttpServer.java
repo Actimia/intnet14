@@ -25,53 +25,50 @@ public class HttpServer {
         ServerSocket ss = new ServerSocket(8080);
         while (true) {
             final Socket s = ss.accept(); // listens to new connections
-            tp.execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
+            tp.execute(() -> {
+                try {
 
-                        // Read and parse the whole request
-                        byte[] buf = new byte[2048];
-                        InputStream in = s.getInputStream();
+                    // Read and parse the whole request
+                    byte[] buf = new byte[2048];
+                    InputStream in = s.getInputStream();
 
-                        int num = in.read(buf);
-                        String request = new String(buf, 0, num, Charset.forName("UTF-8"));
-                        // System.out.println(request);
-                        Request req = Request.parse(request);
+                    int num = in.read(buf);
+                    String request = new String(buf, 0, num, Charset.forName("UTF-8"));
+                    // System.out.println(request);
+                    Request req = Request.parse(request);
 
-                        // ignore favicon gets
-                        if (req.file.equals("/favicon.ico")) {
-                            PrintStream response = new PrintStream(s.getOutputStream());
-                            response.println("HTTP/1.1 200 OK");
-                            s.shutdownOutput();
-                            s.close();
-                            return;
-                        }
-
-                        // System.out.println(request);
-
-                        StringBuilder response;
-                        if (req.method.equals("GET")) {
-                            // static get
-                            response = serveStatic(s);
-                        } else {
-                            // POST
-                            if (req.cookie == null || clients.get(req.cookie) == null) {
-                                // new client
-                                handleNewClient(req, s);
-                            } else {
-                                // old client
-                                handleClient(req, s);
-                            }
-                        }
-
-                        // cleanup
-                        s.shutdownInput();
+                    // ignore favicon gets
+                    if (req.file.equals("/favicon.ico")) {
+                        PrintStream response = new PrintStream(s.getOutputStream());
+                        response.println("HTTP/1.1 200 OK");
                         s.shutdownOutput();
                         s.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        return;
                     }
+
+                    // System.out.println(request);
+
+                    StringBuilder response;
+                    if (req.method.equals("GET")) {
+                        // static get
+                        response = serveStatic(s);
+                    } else {
+                        // POST
+                        if (req.cookie == null || clients.get(req.cookie) == null) {
+                            // new client
+                            handleNewClient(req, s);
+                        } else {
+                            // old client
+                            handleClient(req, s);
+                        }
+                    }
+
+                    // cleanup
+                    s.shutdownInput();
+                    s.shutdownOutput();
+                    s.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             });
         }
